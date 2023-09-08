@@ -1,5 +1,8 @@
 from collections import defaultdict
-import pickle
+try:
+    import ujson as json
+except ImportError:
+    import json
 
 def bigram(text):
     nows = ''.join(text.split())
@@ -99,10 +102,10 @@ class Bucket(object):
             self._index[index].append(tokenized)
 
     def save(self, where):
-        pickle.dump(self._index, where)
+        json.dump(self._index, where)
 
     def load(self, where):
-        self._index = pickle.load(where)
+        self._index = json.load(where)
 
 class Matcher(object):
     def __init__(self, must=[], either=[], sequential=[], should=[], stone_geary=0.25):
