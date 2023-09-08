@@ -81,6 +81,8 @@ class Bucket(object):
         self.topn.clear()
         best_score = 0.0
         for index in indexes:
+            if index not in self._index:
+                break
             for item in self._index[index]:
                 score = self.matcher.components(item, tokenized)
                 if score[0]:
