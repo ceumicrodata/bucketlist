@@ -27,6 +27,47 @@ def separate_stopwords(text, stopwords):
 def remove_stopwords(text, stopwords):
     return separate_stopwords(text, stopwords)[0]
 
+class AbstractStorage(object):
+    def get(self, key):
+        raise NotImplementedError()
+    
+    def put(self, key, value):
+        raise NotImplementedError()
+    
+    def __contains__(self, key):
+        raise NotImplementedError()
+    
+    def __len__(self):
+        raise NotImplementedError()
+    
+    def open(self):
+        raise NotImplementedError()
+    
+    def close(self):    
+        raise NotImplementedError()
+
+class InMemoryStorage(AbstractStorage):
+    def __init__(self):
+        self._data = defaultdict(list)
+
+    def __contains__(self, key):
+        return key in self._data
+    
+    def __len__(self):
+        return len(self._data)
+
+    def get(self, key):
+        return self._data.get(key)
+
+    def put(self, key, value):
+        self._data[key].append(value)
+
+    def open(self):
+        pass
+
+    def close(self):
+        pass
+
 class TopN(object):
     def __init__(self, n=1):
         self.n = n
@@ -57,7 +98,7 @@ class TopN(object):
         self._lowest = None
 
 class Bucket(object):
-    def __init__(self, matcher, analyzer=lambda x: x, indexer=None, n=3):
+    def __init__(self, matcher, analyzer=lambda x: x, indexer=None, n=3, storage: AbstractStorage = InMemoryStorage()):
         self.matcher = matcher
         self.analyzer = analyzer
         if indexer is None:
@@ -65,13 +106,13 @@ class Bucket(object):
                 # index key is a tuple of tuples for all (key, value) pairs in "must"
                 self.indexer = lambda x: [tuple([(key, x[key]) for key in self.matcher.must])]
             elif self.matcher.either:
-                # there is a separate index for each (key, value) pairs in "must"
+                # there is a separate index for each (key, value) pairs in "either"
                 self.indexer = lambda x: [(key, x[key]) for key in self.matcher.either]
             else:
                 self.indexer = lambda x: [None]
         else:
             self.indexer = indexer
-        self._index = defaultdict(list)
+        self._storage = storage
         self.topn = TopN(n)
 
     def find(self, record):
@@ -81,9 +122,9 @@ class Bucket(object):
         self.topn.clear()
         best_score = 0.0
         for index in indexes:
-            if index not in self._index:
+            if index not in self._storage:
                 break
-            for item in self._index[index]:
+            for item in self._storage.get(index):
                 score = self.matcher.components(item, tokenized)
                 if score[0]:
                     self.topn.put(item, score[0], score[1])
@@ -101,13 +142,13 @@ class Bucket(object):
         indexes = self.indexer(tokenized)
         # put in all indexes
         for index in indexes:
-            self._index[index].append(tokenized)
+            self._storage.put(index, tokenized)
 
-    def save(self, where):
-        json.dump(self._index, where)
+    def save(self):
+        self._storage.close()
 
-    def load(self, where):
-        self._index = json.load(where)
+    def load(self):
+        self._storage.open()
 
 class Matcher(object):
     def __init__(self, must=[], either=[], sequential=[], should=[], stone_geary=0.25):

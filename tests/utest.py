@@ -66,7 +66,7 @@ class TestBucket(ut.TestCase):
 		for row in self.data:
 			bucket.put(row)
 		bucket.put({'name': 'apple', 'letter': 'a'})
-		self.assertEqual(len(bucket._index), 4)
+		self.assertEqual(len(bucket._storage), 4)
 
 	def test_must_multiple(self):
 		matcher = search.Matcher(must=['letter', 'second'], should=[('name', lambda x, y: 1.0 if x==y else 0.25)])
@@ -74,7 +74,7 @@ class TestBucket(ut.TestCase):
 		for row in self.data:
 			bucket.put(row)
 		bucket.put({'name': 'apple', 'letter': 'a', 'second': 'p'})
-		self.assertEqual(len(bucket._index), 5)
+		self.assertEqual(len(bucket._storage), 5)
 
 	def test_either_multiple(self):
 		matcher = search.Matcher(either=['letter', 'second'], should=[('name', lambda x, y: 1.0 if x==y else 0.25)])
@@ -82,7 +82,7 @@ class TestBucket(ut.TestCase):
 		for row in self.data:
 			bucket.put(row)
 		bucket.put({'name': 'apple', 'letter': 'a', 'second': 'p'})
-		self.assertEqual(len(bucket._index), 8)
+		self.assertEqual(len(bucket._storage), 8)
 
 	def test_returns_best_from_index(self):
 		bucket = search.Bucket(matcher=self.matcher, 
