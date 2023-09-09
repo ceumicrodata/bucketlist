@@ -1,8 +1,4 @@
 from collections import defaultdict
-try:
-    import ujson as json
-except ImportError:
-    import json
 
 def bigram(text):
     nows = ''.join(text.split())

@@ -2,7 +2,6 @@ from bucketlist import AbstractStorage
 import json
 import hashlib
 import os
-from collections import defaultdict
 
 # With help from ChatGPT4, https://chat.openai.com/share/02a14a64-01f8-4547-935c-9f5e2d6b5eac
 

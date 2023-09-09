@@ -1,2 +1,2 @@
 test:
-	poetry run poetry run python -m unittest tests/utest.py
+	poetry run poetry run python -m unittest discover
