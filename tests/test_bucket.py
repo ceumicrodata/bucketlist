@@ -8,28 +8,29 @@ class TestBucket(ut.TestCase):
 		self.data = [{'name': value,'letter': value[0], 'second': value[1]} for value in 'alpha beta gamma delta'.split()]
 
 	def test_finds_perfect_match(self):
-		bucket = search.Bucket(matcher=self.matcher)
+		# we have to instantiate a new in memory storage for each test
+		bucket = search.Bucket(matcher=self.matcher, storage=search.InMemoryStorage())
 		for row in self.data:
 			bucket.put(row)
 		found = bucket.find(self.data[1])
 		self.assertEqual(found[0][0], self.data[1])
 
 	def test_perfect_match_has_score_1(self):
-		bucket = search.Bucket(matcher=self.matcher)
+		bucket = search.Bucket(matcher=self.matcher, storage=search.InMemoryStorage())
 		for row in self.data:
 			bucket.put(row)
 		found = bucket.find(self.data[1])
 		self.assertEqual(found[0][1], 1.0)
 
 	def test_suboptimal_matches_returned(self):
-		bucket = search.Bucket(matcher=self.matcher, n=4)
+		bucket = search.Bucket(matcher=self.matcher, n=4, storage=search.InMemoryStorage())
 		for row in self.data:
 			bucket.put(row)
 		found = bucket.find({'name': 'epsilon'})
 		self.assertEqual(len(found), 4)
 
 	def test_returns_after_perfect_match(self):
-		bucket = search.Bucket(matcher=self.matcher, n=4)
+		bucket = search.Bucket(matcher=self.matcher, n=4, storage=search.InMemoryStorage())
 		for row in self.data:
 			bucket.put(row)
 		found = bucket.find(self.data[0])
@@ -37,15 +38,16 @@ class TestBucket(ut.TestCase):
 
 	def test_returns_only_from_index(self):
 		bucket = search.Bucket(matcher=self.matcher, 
-			indexer=lambda x: x['name'][0])
+			indexer=lambda x: x['name'][0], storage=search.InMemoryStorage())
 		for row in self.data:
 			bucket.put(row)
-		found = bucket.find({'name': 'apple'})
+		# "banana" is in the same index as "beta"
+		found = bucket.find({'name': 'banana'})
 		self.assertEqual(len(found), 1)
 
 	def test_must_one(self):
 		matcher = search.Matcher(must=['letter'], should=[('name', lambda x, y: 1.0 if x==y else 0.25)])
-		bucket = search.Bucket(matcher=matcher)
+		bucket = search.Bucket(matcher=matcher, storage=search.InMemoryStorage())
 		for row in self.data:
 			bucket.put(row)
 		bucket.put({'name': 'apple', 'letter': 'a'})
@@ -53,7 +55,7 @@ class TestBucket(ut.TestCase):
 
 	def test_must_multiple(self):
 		matcher = search.Matcher(must=['letter', 'second'], should=[('name', lambda x, y: 1.0 if x==y else 0.25)])
-		bucket = search.Bucket(matcher=matcher)
+		bucket = search.Bucket(matcher=matcher, storage=search.InMemoryStorage())
 		for row in self.data:
 			bucket.put(row)
 		bucket.put({'name': 'apple', 'letter': 'a', 'second': 'p'})
@@ -61,7 +63,7 @@ class TestBucket(ut.TestCase):
 
 	def test_either_multiple(self):
 		matcher = search.Matcher(either=['letter', 'second'], should=[('name', lambda x, y: 1.0 if x==y else 0.25)])
-		bucket = search.Bucket(matcher=matcher)
+		bucket = search.Bucket(matcher=matcher, storage=search.InMemoryStorage())
 		for row in self.data:
 			bucket.put(row)
 		bucket.put({'name': 'apple', 'letter': 'a', 'second': 'p'})
@@ -69,7 +71,7 @@ class TestBucket(ut.TestCase):
 
 	def test_returns_best_from_index(self):
 		bucket = search.Bucket(matcher=self.matcher, 
-			indexer=lambda x: x['name'][0])
+			indexer=lambda x: x['name'][0], storage=search.InMemoryStorage())
 		for row in self.data:
 			bucket.put(row)
 		bucket.put({'name': 'apple'})
