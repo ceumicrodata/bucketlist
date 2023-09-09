@@ -49,7 +49,7 @@ class TestJSONlStorage(unittest.TestCase):
 class TestCachedJSONlStorage(unittest.TestCase):
     
     def setUp(self):
-        self.storage = CachedJSONLStorage(root_dir='test_CachedJSONlStorage')
+        self.storage = CachedStorage(JSONLStorage(root_dir='test_CachedJSONlStorage'))
     
     def tearDown(self):
         shutil.rmtree('test_CachedJSONlStorage')

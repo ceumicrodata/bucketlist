@@ -74,15 +74,15 @@ class JSONLStorage(AbstractStorage):
     def close(self):
         pass
 
-class CachedJSONLStorage(JSONLStorage):
-    def __init__(self, root_dir='serialized_data', cache_size=100000):
-        super().__init__(root_dir)
+class CachedStorage(AbstractStorage):
+    def __init__(self, storage: AbstractStorage, cache_size=100000):
+        self._storage = storage
         self.cache = {}
         self.cache_size = cache_size
         self.cache_dirty = set()  # Keep track of keys that need to be written to disk
 
     def __contains__(self, key):
-        return super().__contains__(key) or key in self.cache
+        return key in self.cache or self._storage.__contains__(key) 
     
     def _check_cache_limit(self):
         if len(self.cache) > self.cache_size:
@@ -96,7 +96,7 @@ class CachedJSONLStorage(JSONLStorage):
         if key in self.cache:
             return self.cache[key]
 
-        value = super().get(key)
+        value = self._storage.get(key)
         if value is not None:
             self._check_cache_limit()
             self.cache[key] = value
@@ -110,7 +110,7 @@ class CachedJSONLStorage(JSONLStorage):
         if key in self.cache:
             self.cache[key].append(value)
         else:
-            existing_values = super().get(key) or []
+            existing_values = self._storage.get(key) or []
             existing_values.append(value)
             self._check_cache_limit()
             self.cache[key] = existing_values
@@ -118,6 +118,6 @@ class CachedJSONLStorage(JSONLStorage):
     def close(self):
         # Write only the "dirty" keys to disk
         for key in self.cache_dirty:
-            super().put_all(key, self.cache[key])
-        super().close()
+            self._storage.put_all(key, self.cache[key])
+        self._storage.close()
         self.cache_dirty.clear()
