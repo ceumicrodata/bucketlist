@@ -1,7 +1,7 @@
 import unittest
 import shutil
 import json
-from bucketlist import InMemoryStorage, JSONLStorage, CachedJSONLStorage, DiskDict
+from bucketlist import InMemoryStorage, JSONLStorage, CachedStorage, DiskDict
 
 # Assuming DiskDict, JSONlStorage, CachedJSONlStorage, and InMemoryStorage classes are already defined
 
@@ -67,9 +67,7 @@ class TestCachedJSONlStorage(unittest.TestCase):
         self.storage.put("key1", {"x": 2})
         self.storage.close()
         
-        new_storage = CachedJSONLStorage(root_dir='test_CachedJSONlStorage')
-        with open(new_storage._disk_dict.get_file_path("key1"), 'rt') as f:
-            print(f.readlines())
+        new_storage = CachedStorage(JSONLStorage(root_dir='test_CachedJSONlStorage'))
         self.assertEqual(new_storage.get("key1"), [{"x": 1}, {"x": 2}])
 
 
