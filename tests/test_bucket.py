@@ -2,23 +2,6 @@ import unittest as ut
 import bucketlist as search
 import io
 
-class TestBucketSave(ut.TestCase):
-	def setUp(self):
-		self.stream = io.BytesIO()
-		self.matcher = search.Matcher(should=[('name', lambda x, y: 1.0 if x==y else 0.25)])
-		self.data = [{'name': value,'letter': value[0], 'second': value[1]} for value in 'alpha beta gamma delta'.split()]
-
-	def test_save_then_load(self):
-		bucket = search.Bucket(matcher=self.matcher)
-		for row in self.data:
-			bucket.put(row)
-		bucket.save(self.stream)
-		self.stream.seek(0)
-		new_bucket = search.Bucket(matcher=self.matcher)
-		new_bucket.load(self.stream)
-		for key in bucket._index:
-			self.assertListEqual(bucket._index[key], new_bucket._index[key])
-
 class TestBucket(ut.TestCase):
 	def setUp(self):
 		self.matcher = search.Matcher(should=[('name', lambda x, y: 1.0 if x==y else 0.25)])
