@@ -92,6 +92,9 @@ class CachedStorage(AbstractStorage):
             self.cache.pop(oldest_key)
             self.cache_dirty.discard(oldest_key)
 
+    def open(self):
+        return self._storage.open()
+
     def get(self, key):
         if key in self.cache:
             return self.cache[key]
