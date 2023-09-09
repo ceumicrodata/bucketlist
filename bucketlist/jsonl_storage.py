@@ -2,8 +2,9 @@ from bucketlist import AbstractStorage
 import json
 import hashlib
 import os
+from collections import defaultdict
 
-# With help from ChatGPT4, https://chat.openai.com/share/c3e011ef-9a34-4b34-bd88-00855acc1e37
+# With help from ChatGPT4, https://chat.openai.com/share/02a14a64-01f8-4547-935c-9f5e2d6b5eac
 
 # DiskDict class
 class DiskDict:
@@ -65,3 +66,54 @@ class JSONlStorage(AbstractStorage):
 
     def close(self):
         pass
+
+class CachedJSONlStorage(JSONlStorage):
+    def __init__(self, root_dir='serialized_data', cache_size=100000):
+        super().__init__(root_dir)
+        self.cache = {}
+        self.cache_size = cache_size
+        self.cache_dirty = set()  # Keep track of keys that need to be written to disk
+
+    def _check_cache_limit(self):
+        if len(self.cache) > self.cache_size:
+            oldest_key = list(self.cache.keys())[0]
+            if oldest_key in self.cache_dirty:
+                super().put(oldest_key, self.cache[oldest_key])
+            self.cache.pop(oldest_key)
+            self.cache_dirty.discard(oldest_key)
+
+    def get(self, key):
+        if key in self.cache:
+            return self.cache[key]
+
+        value = super().get(key)
+        if value is not None:
+            self._check_cache_limit()
+            self.cache[key] = value
+        return value
+
+    def put(self, key, value):
+        # Mark this key as dirty (modified)
+        self.cache_dirty.add(key)
+
+        # Update the cache
+        if key in self.cache:
+            self.cache[key].append(value)
+        else:
+            existing_values = super().get(key) or []
+            existing_values.append(value)
+            self._check_cache_limit()
+            self.cache[key] = existing_values
+
+    def close(self):
+        # Write only the "dirty" keys to disk
+        for key in self.cache_dirty:
+            super().put(key, self.cache[key])
+        super().close()
+        self.cache_dirty.clear()
+
+# Example usage
+storage = JSONlStorage()
+storage.put("key1", {"x": 1})
+print(storage.get("key1"))  # Should read from cache after the first time
+storage.close()  # Write cache to disk
