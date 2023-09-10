@@ -2,12 +2,14 @@ from collections import defaultdict
 import uuid
 
 # meta functions
-def missing_or_compare(x, y, func, missing_penalty=0.15):
-    if all([x, y]):
-        return func(x, y)
-    if not any([x, y]):
-        return  (1.0 - missing_penalty)**2
-    return 1.0 - missing_penalty
+def missing_or_compare(func, missing_penalty=0.15):
+    def inner_func(x, y):
+        if all([x, y]):
+            return func(x, y)
+        if not any([x, y]):
+            return  (1.0 - missing_penalty)**2
+        return 1.0 - missing_penalty
+    return inner_func
 
 # univariate processing functions
 def bigram(text):
