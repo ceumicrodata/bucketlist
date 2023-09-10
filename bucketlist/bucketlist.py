@@ -103,7 +103,10 @@ class TopN(object):
         self._lowest = None
 
 class Bucket(object):
-    def __init__(self, matcher, analyzer=lambda x: x, indexer=None, n=3, storage: AbstractStorage = InMemoryStorage()):
+    def __init__(self, matcher, analyzer=lambda x: x, indexer=None, n=3, storage: AbstractStorage=None):
+        # instantiate storage only when a bucket is created
+        if storage is None:
+            storage = InMemoryStorage()
         self.matcher = matcher
         self.analyzer = analyzer
         if indexer is None:

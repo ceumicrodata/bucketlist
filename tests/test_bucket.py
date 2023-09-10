@@ -45,6 +45,12 @@ class TestBucket(ut.TestCase):
 		self.matcher = search.Matcher(should=[('name', lambda x, y: 1.0 if x==y else 0.25)])
 		self.data = [{'name': value,'letter': value[0], 'second': value[1]} for value in 'alpha beta gamma delta'.split()]
 
+	def test_no_common_storage(self):
+		bucket1 = search.Bucket(matcher=self.matcher)
+		bucket2 = search.Bucket(matcher=self.matcher)
+		bucket1.put(self.data[0])
+		self.assertEqual(len(bucket2._storage), 0)
+
 	def test_finds_perfect_match(self):
 		# we have to instantiate a new in memory storage for each test
 		bucket = search.Bucket(matcher=self.matcher, storage=search.InMemoryStorage())
