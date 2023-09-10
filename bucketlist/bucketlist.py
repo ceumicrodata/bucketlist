@@ -1,4 +1,5 @@
 from collections import defaultdict
+import uuid
 
 # meta functions
 def missing_or_compare(x, y, func, missing_penalty=0.15):
@@ -74,33 +75,48 @@ class InMemoryStorage(AbstractStorage):
         pass
 
 class TopN(object):
-    def __init__(self, n=1):
+    def __init__(self, n=1, group_by=None):
         self.n = n
-        self._data = []
-        self._lowest = None
+        self._data = {}
+        if group_by:
+            self.group_by = group_by
+        else:
+            # if there is no group_by, every record will get a unique group
+            self.group_by = lambda x: uuid.uuid4().int
 
-    def _add(self, data):
+    def _add(self, key, data):
         # do not add exact duplicates
-        if data not in self._data:
-            self._data.append(data)
+        if data not in self._data.values():
+            self._data[key] = data
 
-    def put(self, data, score, comp):
-        if len(self._data) < self.n:
-            self._add((data, score, comp))
-            self._data.sort(key=lambda x: x[1], reverse=True)
-            self._lowest = self._data[-1][1]
-        elif score > self._lowest:
-            del self._data[-1]
-            self._add((data, score, comp))
-            self._data.sort(key=lambda x: x[1], reverse=True)
-            self._lowest = self._data[-1][1]
+    def _lowest(self):
+        return min((x[1] for x in self._data.values()))
+    
+    def _get_lowest(self):
+        for key, value in self._data.items():
+            if value[1] == self._lowest():
+                return key
+
+    def put(self, data, score):
+        key = self.group_by(data)
+        if key not in self._data:
+            if len(self._data) < self.n:
+                self._add(key, (data, score))
+            elif score > self._lowest():
+                # remove the lowest score
+                lowest_index = self._get_lowest()
+                del self._data[lowest_index]
+                self._add(key, (data, score))
+        else:
+            old_score = self._data[key][1]
+            if score > old_score:
+                self._data[key] = (data, score)
 
     def get(self):
-        return self._data
+        return list(self._data.values())
 
     def clear(self):
-        self._data = []
-        self._lowest = None
+        self._data = {}
 
 class Bucket(object):
     def __init__(self, matcher, analyzer=lambda x: x, indexer=None, n=3, storage: AbstractStorage=None):
@@ -135,7 +151,7 @@ class Bucket(object):
             for item in self._storage.get(index):
                 score = self.matcher.components(item, tokenized)
                 if score[0]:
-                    self.topn.put(item, score[0], score[1])
+                    self.topn.put(item, score[0])
                     best_score = max(score[0], best_score)
                 if best_score > 0.9999:
                     # if perfect score is reached, no point in going further
