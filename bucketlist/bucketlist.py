@@ -1,5 +1,14 @@
 from collections import defaultdict
 
+# meta functions
+def missing_or_compare(x, y, func, missing_penalty=0.15):
+    if all([x, y]):
+        return func(x, y)
+    if not any([x, y]):
+        return  (1.0 - missing_penalty)**2
+    return 1.0 - missing_penalty
+
+# univariate processing functions
 def bigram(text):
     nows = ''.join(text.split())
     return [''.join(z) for z in zip(nows, nows[1:])]
@@ -22,7 +31,7 @@ def separate_stopwords(text, stopwords):
 
 def remove_stopwords(text, stopwords):
     return separate_stopwords(text, stopwords)[0]
-
+    
 class AbstractStorage(object):
     def get(self, key):
         raise NotImplementedError()

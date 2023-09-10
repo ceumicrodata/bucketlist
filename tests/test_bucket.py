@@ -1,6 +1,44 @@
 import unittest as ut 
 import bucketlist as search
-import io
+
+class TestMissingOrCompare(ut.TestCase):
+
+    def test_both_non_empty(self):
+        func = lambda x, y: float(x == y)  # 1.0 if x == y, else 0.0
+        result = search.missing_or_compare("abc", "abc", func)
+        self.assertAlmostEqual(result, 1.0)
+
+        result = search.missing_or_compare("abc", "def", func)
+        self.assertAlmostEqual(result, 0.0)
+
+    def test_both_empty(self):
+        func = lambda x, y: float(x == y)
+        result = search.missing_or_compare("", "", func)
+        self.assertAlmostEqual(result, (1.0 - 0.15)**2)
+
+    def test_one_empty(self):
+        func = lambda x, y: float(x == y)
+        result = search.missing_or_compare("", "abc", func)
+        self.assertAlmostEqual(result, 1.0 - 0.15)
+
+        result = search.missing_or_compare("abc", "", func)
+        self.assertAlmostEqual(result, 1.0 - 0.15)
+
+    def test_custom_penalty(self):
+        func = lambda x, y: float(x == y)
+        result = search.missing_or_compare("", "", func, missing_penalty=0.2)
+        self.assertAlmostEqual(result, (1.0 - 0.2)**2)
+
+        result = search.missing_or_compare("abc", "", func, missing_penalty=0.2)
+        self.assertAlmostEqual(result, 1.0 - 0.2)
+
+    def test_with_different_func(self):
+        func = lambda x, y: 0.5  # Always returns 0.5
+        result = search.missing_or_compare("abc", "abc", func)
+        self.assertAlmostEqual(result, 0.5)
+
+        result = search.missing_or_compare("abc", "def", func)
+        self.assertAlmostEqual(result, 0.5)
 
 class TestBucket(ut.TestCase):
 	def setUp(self):
