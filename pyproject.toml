@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "bucketlist"
-version = "0.4.0"
+version = "0.5.0"
 description = ""
 authors = ["Miklos Koren <miklos.koren@gmail.com>"]
 readme = "README.md"

@@ -121,7 +121,7 @@ class TopN(object):
         self._data = {}
 
 class Bucket(object):
-    def __init__(self, matcher, analyzer=lambda x: x, indexer=None, n=3, storage: AbstractStorage=None):
+    def __init__(self, matcher, analyzer=lambda x: x, indexer=None, n=3, storage: AbstractStorage=None, group_by=None):
         # instantiate storage only when a bucket is created
         if storage is None:
             storage = InMemoryStorage()
@@ -139,7 +139,7 @@ class Bucket(object):
         else:
             self.indexer = indexer
         self._storage = storage
-        self.topn = TopN(n)
+        self.topn = TopN(n, group_by=group_by)
 
     def find(self, record):
         tokenized = self.analyzer(record)

@@ -77,9 +77,10 @@ class TestTopN(ut.TestCase):
 		group_topn = search.TopN(3, group_by=lambda x: x[0])
 		group_topn.put('apple', 0.9)
 		group_topn.put('alpha', 0.8)
+		group_topn.put('ananas', 0.95)
 		group_topn.put('banana', 0.9)
 		self.assertEqual(len(group_topn.get()), 2)
-		self.assertSetEqual(set(group_topn.get()), set([('apple', 0.9), ('banana', 0.9)]))
+		self.assertSetEqual(set(group_topn.get()), set([('ananas', 0.95), ('banana', 0.9)]))
 
 
 class TestBucket(ut.TestCase):
@@ -162,6 +163,15 @@ class TestBucket(ut.TestCase):
 			bucket.put(row)
 		bucket.put({'name': 'apple'})
 		found = bucket.find({'name': 'apple'})
+		self.assertEqual(found[0][0]['name'], 'apple')
+
+	def test_best_by_group(self):
+		bucket = search.Bucket(matcher=self.matcher, indexer=lambda x: x['name'][0], n=3, group_by=lambda x: x['name'][0])
+		for row in self.data:
+			bucket.put(row)
+		bucket.put({'name': 'apple'})
+		found = bucket.find({'name': 'apple'})
+		self.assertEqual(len(found), 1)
 		self.assertEqual(found[0][0]['name'], 'apple')
 
 class Test_Matcher(ut.TestCase):
