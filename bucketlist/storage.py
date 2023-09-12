@@ -1,7 +1,48 @@
-from bucketlist import AbstractStorage
 import json
 import hashlib
 import os
+from collections import defaultdict
+
+class AbstractStorage(object):
+    def get(self, key):
+        raise NotImplementedError()
+    
+    def put(self, key, value):
+        raise NotImplementedError()
+    
+    def __contains__(self, key):
+        raise NotImplementedError()
+    
+    def __len__(self):
+        raise NotImplementedError()
+    
+    def open(self):
+        raise NotImplementedError()
+    
+    def close(self):    
+        raise NotImplementedError()
+
+class InMemoryStorage(AbstractStorage):
+    def __init__(self):
+        self._data = defaultdict(list)
+
+    def __contains__(self, key):
+        return key in self._data
+    
+    def __len__(self):
+        return len(self._data)
+
+    def get(self, key):
+        return self._data.get(key)
+
+    def put(self, key, value):
+        self._data[key].append(value)
+
+    def open(self):
+        pass
+
+    def close(self):
+        pass
 
 # With help from ChatGPT4, https://chat.openai.com/share/02a14a64-01f8-4547-935c-9f5e2d6b5eac
 

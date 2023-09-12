@@ -1,5 +1,5 @@
-from collections import defaultdict
 import uuid
+from bucketlist.storage import AbstractStorage, InMemoryStorage
 
 # meta functions
 def missing_or_compare(func, missing_penalty=0.15):
@@ -35,47 +35,6 @@ def separate_stopwords(text, stopwords):
 def remove_stopwords(text, stopwords):
     return separate_stopwords(text, stopwords)[0]
     
-class AbstractStorage(object):
-    def get(self, key):
-        raise NotImplementedError()
-    
-    def put(self, key, value):
-        raise NotImplementedError()
-    
-    def __contains__(self, key):
-        raise NotImplementedError()
-    
-    def __len__(self):
-        raise NotImplementedError()
-    
-    def open(self):
-        raise NotImplementedError()
-    
-    def close(self):    
-        raise NotImplementedError()
-
-class InMemoryStorage(AbstractStorage):
-    def __init__(self):
-        self._data = defaultdict(list)
-
-    def __contains__(self, key):
-        return key in self._data
-    
-    def __len__(self):
-        return len(self._data)
-
-    def get(self, key):
-        return self._data.get(key)
-
-    def put(self, key, value):
-        self._data[key].append(value)
-
-    def open(self):
-        pass
-
-    def close(self):
-        pass
-
 class TopN(object):
     def __init__(self, n=1, group_by=None):
         self.n = n
