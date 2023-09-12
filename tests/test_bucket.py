@@ -205,6 +205,25 @@ class Test_Matcher(ut.TestCase):
 		score = matcher.components(row, row)[0]
 		self.assertEqual(score, 1.0)
 
+class TestEither(ut.TestCase):
+	def setUp(self):
+		self.analyzer = lambda value : {'name': value, 'letter': value[0], 'second': value[1]}
+		self.data = [self.analyzer(value) for value in 'karma korma darma fungus'.split()]
+		self.matcher = search.Matcher(either=['letter', 'second'])
+		
+	def test_neither(self):
+		test_row = self.analyzer('beta')
+		for row in self.data:
+			score = self.matcher.components(row, test_row)[0]
+			self.assertEqual(score, 0.0)
+
+	def test_multiple_match(self):
+		test_row = self.analyzer('karma')
+		self.assertEqual(
+			len([row for row in self.data if self.matcher.components(row, test_row)[0] == 1.0]),
+			3)
+
+
 class TestSequantialMatcher(ut.TestCase):
 	def test_sequential_can_be_one(self):
 		matcher = search.Matcher(sequential=[('column_a', lambda x, y: True)])
