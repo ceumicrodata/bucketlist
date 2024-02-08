@@ -8,6 +8,7 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "^3.8"
 ujson = "^5.8.0"
+levenshtein = "^0.24.0"
 
 
 [build-system]

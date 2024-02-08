@@ -1,5 +1,6 @@
 import uuid
-from bucketlist.storage import AbstractStorage, InMemoryStorage
+from storage import AbstractStorage, InMemoryStorage
+import math
 
 # meta functions
 def missing_or_compare(func, missing_penalty=0.15):
@@ -215,3 +216,40 @@ if __name__ == '__main__':
 
     print(bucket.find(record4))
     print(bucket.find(record5))
+
+    city1 = dict(name='Vienna', is_alternate=True, lat=48.2083, lon=16.3731, population=1805681)
+    city2 = dict(name='Wien', is_alternate=False, lat=48.2083, lon=16.3731, population=1805681)
+    city3 = dict(name='Munich', is_alternate=True, lat=48.1351, lon=11.5820, population=1450381)
+    city4 = dict(name='München', is_alternate=False, lat=48.1351, lon=11.5820, population=1450381)
+    city5 = dict(name='Bécs', is_alternate=True, lat=48.2083, lon=16.3731, population=1805681)
+    city6 = dict(name='Vienna', is_alternate=False, lat=33.2202, lon=-83.7998, population=15000)
+
+    def first_letter(row):
+        row['first_letter'] = row['name'][0].upper()
+        return row
+    
+    city_matcher = Matcher(must=['first_letter'],
+        should=[
+        ('name', jaro_winkler),
+        ('lat', missing_or_compare(lambda x, y: 1 - abs(x - y) / 180.0)),
+        ('lon', missing_or_compare(lambda x, y: 1 - abs(x - y) / 180.0)),
+        ('population', missing_or_compare(lambda x, y: math.sqrt(y / 1800000.0))),
+        ('is_alternate', lambda x, y: 0.8 if y else 1.0)])
+    
+    cities = Bucket(city_matcher, first_letter)
+
+    for i in [city1, city2, city3, city4, city5, city6]:
+        cities.put(i)
+
+    candidate_cities = [
+        dict(name='Vienna', lat=48.2083, lon=16.3731, population=None),
+        dict(name='München', lat=None, lon=11.5820, population=1450381),
+        dict(name='Bécs', lat=None, lon=None, population=None),
+        dict(name='Vienna', lat=33.2202, lon=-83.7998, population=15000)
+    ]
+    [city.update({'is_alternate': False}) for city in candidate_cities]
+
+    for i in candidate_cities:
+        print(f'Looking for {i["name"]}')
+        for j in cities.find(i):
+            print(j)
