@@ -1,5 +1,5 @@
 import uuid
-from storage import AbstractStorage, InMemoryStorage
+from .storage import AbstractStorage, InMemoryStorage
 import math
 
 # meta functions
