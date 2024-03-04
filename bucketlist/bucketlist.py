@@ -81,7 +81,7 @@ class TopN(object):
         self._data = {}
 
 class Bucket(object):
-    def __init__(self, matcher, analyzer=lambda x: x, indexer=None, n=3, storage: AbstractStorage=None, group_by=None):
+    def __init__(self, matcher, analyzer=lambda x: x, indexer=None, n=3, storage: AbstractStorage=None, group_by=None, sufficient_score=0.9999):
         # instantiate storage only when a bucket is created
         if storage is None:
             storage = InMemoryStorage()
@@ -100,6 +100,7 @@ class Bucket(object):
             self.indexer = indexer
         self._storage = storage
         self.topn = TopN(n, group_by=group_by)
+        self.sufficient_score = sufficient_score
 
     def find(self, record):
         tokenized = self.analyzer(record)
@@ -115,10 +116,10 @@ class Bucket(object):
                 if score[0]:
                     self.topn.put(item, score[0])
                     best_score = max(score[0], best_score)
-                if best_score > 0.9999:
+                if best_score > self.sufficient_score:
                     # if perfect score is reached, no point in going further
                     break
-            if best_score > 0.9999:
+            if best_score > self.sufficient_score:
                 # if perfect score is reached, no point in going further
                 break
         return self.topn.get()
